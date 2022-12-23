@@ -3,3 +3,11 @@ compiled
 shiftable
 __pycache__
 *.json
+nonmatch
+*.txt
+*.o
+
+
+# Added by cargo
+
+/target
