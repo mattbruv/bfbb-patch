@@ -2,3 +2,4 @@ files
 compiled
 shiftable
 __pycache__
+*.json
