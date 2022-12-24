@@ -43,10 +43,17 @@ fn main() -> Result<(), Box<dyn Error>> {
         .filter(|sym| sym.kind() == SymbolKind::Text)
         .collect();
 
-    dbg!(source_funcs.iter().count());
+    let replace_funcs: Vec<Symbol> = source_funcs
+        .into_iter()
+        .filter(|func| {
+            target_funcs
+                .iter()
+                .any(|f| f.name().unwrap() == func.name().unwrap())
+        })
+        .collect();
 
-    for func in source_funcs {
-        println!("{} {}", func.name().unwrap(), func.size());
+    for sym in replace_funcs {
+        println!("{}, {}", sym.name().unwrap(), sym.address());
     }
 
     fs::write(args.out, out_elf.write().unwrap())?;
