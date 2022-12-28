@@ -1,3 +1,9 @@
+# Thoughts
+
+- If you append the strings & relocations at the end, you shouldn't need to update all of the existing data.
+  - Only will need to remove relocations that are no longer relevant, and then append new ones at the end.
+  - new relocation strings are appended to end of string table
+
 # Sections in our Assembly Files
 
 ## Repated Sections

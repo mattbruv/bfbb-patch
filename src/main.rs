@@ -1,9 +1,9 @@
 use argh::FromArgs;
 use object::{
-    self, read::elf::Sym, File, Object, ObjectSection, ObjectSymbol, Relocation, SectionKind,
-    Symbol, SymbolKind,
+    self, read::elf::Sym, File, Object, ObjectSection, ObjectSymbol, Relocation, RelocationTarget,
+    SectionKind, Symbol, SymbolKind,
 };
-use std::{collections::binary_heap::Iter, error::Error, fs, io::Read};
+use std::{collections::binary_heap::Iter, error::Error, fs, io::Read, vec};
 
 #[derive(FromArgs)]
 /// Creates a patched ELF object file. Patches code from source object into target object.
@@ -21,6 +21,79 @@ struct PatchArgs {
     out: String,
 }
 
+enum ParsedSymbolFlag {
+    Global,
+    Local,
+    Weak,
+    Common,
+    Hidden,
+}
+
+enum ParsedSymbolKind {
+    Unknown,
+    Function,
+    Object,
+    Section,
+}
+
+struct ParsedSymbol {
+    pub name: String,
+    pub address: u64,
+    pub section: Option<usize>,
+    pub size: u64,
+    pub flags: ParsedSymbolFlag,
+    pub kind: ParsedSymbolKind,
+}
+
+enum ParsedSectionKind {
+    Code,
+    Data,
+    ReadOnlyData,
+    Bss,
+}
+
+enum ParsedRelocKind {
+    Absolute,
+    PpcAddr16Hi,
+    PpcAddr16Ha,
+    PpcAddr16Lo,
+    PpcRel24,
+    PpcRel14,
+    PpcEmbSda21,
+}
+
+struct ParsedReloc {
+    pub kind: ParsedRelocKind,
+    pub address: u64,
+    pub target_symbol: usize,
+    pub addend: i64,
+}
+
+struct ParsedSection {
+    pub name: String,
+    pub kind: ParsedSectionKind,
+    pub address: u64,
+    pub size: u64,
+    pub data: Vec<u8>,
+    pub align: u64,
+    pub index: usize,
+    pub relocations: Vec<ParsedReloc>,
+    pub original_address: u64,
+    pub file_offset: u64,
+}
+
+struct ParsedFunction {
+    pub name: String,
+    pub size: u64,
+    pub bytes: Vec<u8>,
+}
+
+struct ParsedObject {
+    pub symbols: Vec<ParsedSymbol>,
+    pub sections: Vec<ParsedSection>,
+    pub functions: Vec<ParsedFunction>,
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     let args: PatchArgs = argh::from_env();
 
@@ -36,38 +109,19 @@ fn main() -> Result<(), Box<dyn Error>> {
         object::Endianness::Big,
     );
 
-    let target_funcs: Vec<Symbol> = target_elf
-        .symbols()
-        .filter(|sym| sym.kind() == SymbolKind::Text)
-        .collect();
-
-    let source_funcs: Vec<Symbol> = source_elf
-        .symbols()
-        .filter(|sym| sym.kind() == SymbolKind::Text)
-        .collect();
-
-    let replace_funcs: Vec<Symbol> = source_funcs
-        .into_iter()
-        .filter(|func| {
-            target_funcs
-                .iter()
-                .any(|f| f.name().unwrap() == func.name().unwrap())
-        })
-        .collect();
-
-    for sym in replace_funcs {
-        let name = sym.name().unwrap();
-        let bytes_target = get_function_code(name, &target_elf);
-        let bytes_source = get_function_code(name, &source_elf);
-    }
-
-    fs::write(args.out, out_elf.write().unwrap())?;
-
     Ok(())
 }
 
+fn parse_object(elf: &object::read::File) -> ParsedObject {
+    ParsedObject {
+        symbols: vec![],
+        sections: vec![],
+        functions: vec![],
+    }
+}
+
 fn bytes_equal(vec1: &Vec<u8>, vec2: &Vec<u8>) -> bool {
-    if !vec1.len() != vec2.len() {
+    if vec1.len() != vec2.len() {
         return false;
     }
 
