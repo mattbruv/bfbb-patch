@@ -11,7 +11,7 @@ pub struct Symbol {
 }
  */
 
-use object::{write::SectionId, SymbolFlags, SymbolKind, SymbolScope};
+use object::{write::SectionId, SectionIndex, SymbolFlags, SymbolKind, SymbolScope};
 
 #[derive(Debug)]
 pub struct BFBBSymbol {
@@ -22,5 +22,5 @@ pub struct BFBBSymbol {
     pub scope: SymbolScope,
     pub weak: bool,
     pub section: Option<usize>,
-    pub flags: Option<SymbolFlags<SectionId>>,
+    pub flags: SymbolFlags<SectionIndex>,
 }

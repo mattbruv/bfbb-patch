@@ -40,7 +40,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         object::Endianness::Big,
     );
 
-    let syms = read_symbols(&target_elf);
+    let mut syms = read_symbols(&target_elf);
+    syms.sort_by_key(|x| x.name.clone());
 
     println!("Parsed symbols: ");
     for sym in syms {
