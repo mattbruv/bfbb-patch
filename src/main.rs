@@ -1,9 +1,13 @@
+pub mod util;
+
 use argh::FromArgs;
 use object::{
     self, Object, ObjectSection, ObjectSymbol, Relocation, RelocationTarget, SectionKind, Symbol,
     SymbolKind,
 };
 use std::{error::Error, fs, vec};
+
+use crate::util::read::read_symbols;
 
 #[derive(FromArgs)]
 /// Creates a patched ELF object file. Patches code from source object into target object.
@@ -36,6 +40,16 @@ fn main() -> Result<(), Box<dyn Error>> {
         object::Endianness::Big,
     );
 
+    let syms = read_symbols(&target_elf);
+
+    println!("Parsed symbols: ");
+    for sym in syms {
+        println!("{:?}", sym);
+    }
+
+    //let s = target_elf.symbols().nth(0).unwrap();
+    //out_elf.add_symbol(s);
+
     fs::write(args.out, out_elf.write().unwrap())?;
 
     Ok(())
@@ -55,6 +69,18 @@ fn bytes_equal(vec1: &Vec<u8>, vec2: &Vec<u8>) -> bool {
     }
 
     true
+}
+
+fn dump_sections(name: &str, elf: &object::read::File) {
+    println!("Dumping...");
+    for section in elf.sections() {
+        let name = section.name().unwrap();
+        let data = section.data().unwrap();
+        println!("{}", name);
+        println!("{:02X?}", data);
+        println!("");
+    }
+    //
 }
 
 // Takes a function symbol + elf and returns the bytes of that function
