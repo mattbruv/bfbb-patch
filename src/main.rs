@@ -5,9 +5,13 @@ use object::{
     self, Object, ObjectSection, ObjectSymbol, Relocation, RelocationTarget, SectionKind, Symbol,
     SymbolKind,
 };
-use std::{error::Error, fs, vec};
+use std::{
+    error::Error,
+    fs::{self, read},
+    vec,
+};
 
-use crate::util::read::read_symbols;
+use crate::util::read::read_obj;
 
 #[derive(FromArgs)]
 /// Creates a patched ELF object file. Patches code from source object into target object.
@@ -40,7 +44,9 @@ fn main() -> Result<(), Box<dyn Error>> {
         object::Endianness::Big,
     );
 
-    let mut syms = read_symbols(&target_elf);
+    let target_obj = read_obj(&target_elf);
+
+    let mut syms = target_obj.symbols;
     syms.sort_by_key(|x| x.index.0);
 
     let mut count = 1;
@@ -59,6 +65,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     println!("{} symbols processed", syms.len());
+
+    println!("Sections:");
+    for section in target_obj.sections {
+        println!("{:?}", section);
+    }
 
     //let s = target_elf.symbols().nth(0).unwrap();
     //out_elf.add_symbol(s);
@@ -82,33 +93,4 @@ fn bytes_equal(vec1: &Vec<u8>, vec2: &Vec<u8>) -> bool {
     }
 
     true
-}
-
-fn dump_sections(name: &str, elf: &object::read::File) {
-    println!("Dumping...");
-    for section in elf.sections() {
-        let name = section.name().unwrap();
-        let data = section.data().unwrap();
-        println!("{}", name);
-        println!("{:02X?}", data);
-        println!("");
-    }
-    //
-}
-
-// Takes a function symbol + elf and returns the bytes of that function
-fn get_function_code(func_name: &str, elf: &object::read::File) -> Vec<u8> {
-    let sym = elf
-        .symbols()
-        .find(|s| s.name().unwrap() == func_name)
-        .unwrap();
-
-    let index = sym.section_index().unwrap();
-    let begin = sym.address() as usize;
-    let end = begin + sym.size() as usize;
-    let section = elf.section_by_index(index).unwrap();
-    let data = section.data().unwrap();
-    let bytes: Vec<u8> = data[begin..end].into();
-
-    bytes
 }

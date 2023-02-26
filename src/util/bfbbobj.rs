@@ -1,7 +1,13 @@
 use object::{
-    RelocationEncoding, RelocationKind, SectionIndex, SymbolFlags, SymbolIndex, SymbolKind,
-    SymbolScope,
+    RelocationEncoding, RelocationKind, SectionFlags, SectionIndex, SectionKind, SymbolFlags,
+    SymbolIndex, SymbolKind, SymbolScope,
 };
+
+#[derive(Debug)]
+pub struct BFBBObj {
+    pub sections: Vec<BFBBSection>,
+    pub symbols: Vec<BFBBSymbol>,
+}
 
 #[derive(Debug)]
 pub struct BFBBData {
@@ -38,4 +44,16 @@ pub struct BFBBRelocation {
     pub encoding: RelocationEncoding,
     pub symbol_name: String,
     pub addend: i64,
+}
+
+#[derive(Debug)]
+pub struct BFBBSection {
+    pub name: String,
+    pub kind: SectionKind,
+    pub address: u64,
+    pub size: u64,
+    // pub data: Vec<u8>,
+    pub align: u64,
+    pub index: usize,
+    pub flags: SectionFlags,
 }

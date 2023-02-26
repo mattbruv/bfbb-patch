@@ -1,14 +1,32 @@
 use std::vec;
 
-use super::bfbbobj::{BFBBData, BFBBRelocation, BFBBSymbol};
-use object::{
-    write::{elf::Sym, Symbol},
-    Object, ObjectSection, ObjectSymbol, RelocationTarget, SymbolKind,
-};
+use super::bfbbobj::{BFBBData, BFBBObj, BFBBRelocation, BFBBSection, BFBBSymbol};
+use object::{Object, ObjectSection, ObjectSymbol, RelocationTarget, SymbolKind};
 
-pub fn read_symbols(elf: &object::read::File) -> Vec<BFBBSymbol> {
+pub fn read_obj(elf: &object::read::File) -> BFBBObj {
+    BFBBObj {
+        sections: read_sections(elf),
+        symbols: read_symbols(elf),
+    }
+}
+
+fn read_symbols(elf: &object::read::File) -> Vec<BFBBSymbol> {
     let symbols: Vec<BFBBSymbol> = elf.symbols().map(|s| read_symbol(&s, elf)).collect();
     symbols
+}
+
+fn read_sections(elf: &object::read::File) -> Vec<BFBBSection> {
+    elf.sections()
+        .map(|section| BFBBSection {
+            name: section.name().unwrap().to_string(),
+            kind: section.kind(),
+            address: section.address(),
+            size: section.size(),
+            align: section.align(),
+            index: section.index().0,
+            flags: section.flags(),
+        })
+        .collect()
 }
 
 fn get_relocs_at_data(
@@ -19,9 +37,9 @@ fn get_relocs_at_data(
 ) -> Vec<BFBBRelocation> {
     match section_id {
         Some(id) => {
-            // test
             let section = elf.section_by_index(object::SectionIndex(id)).unwrap();
-            let foo: Vec<BFBBRelocation> = section
+
+            section
                 .relocations()
                 .filter(|(addr, _)| *addr >= start && *addr <= end)
                 .map(|(addr, rel)| BFBBRelocation {
@@ -39,8 +57,7 @@ fn get_relocs_at_data(
                     },
                     addend: rel.addend(),
                 })
-                .collect();
-            foo
+                .collect()
         }
         _ => vec![],
     }
