@@ -24,18 +24,20 @@ fn get_relocs_at_data(
             let foo: Vec<BFBBRelocation> = section
                 .relocations()
                 .filter(|(addr, _)| *addr >= start && *addr <= end)
-                //.filter(|(idx, rel)| rel.target())
-                .map(|(addr, rel)| {
-                    BFBBRelocation {
-                        address: addr,
-                        // test
-                        offset: 0,
-                        size: 0,
-                        kind: rel.kind(),
-                        encoding: rel.encoding(),
-                        symbol_name: String::new(),
-                        addend: rel.addend(),
-                    }
+                .map(|(addr, rel)| BFBBRelocation {
+                    address: addr,
+                    relative_address: addr - start,
+                    offset: 0,
+                    size: rel.size(),
+                    kind: rel.kind(),
+                    encoding: rel.encoding(),
+                    symbol_name: match rel.target() {
+                        RelocationTarget::Symbol(idx) => {
+                            symbol_name(&elf.symbol_by_index(idx).unwrap())
+                        }
+                        _ => panic!("Unhandled relocation target"),
+                    },
+                    addend: rel.addend(),
                 })
                 .collect();
             foo
@@ -68,6 +70,10 @@ fn get_symbol_data(symbol: &object::Symbol, elf: &object::read::File) -> Vec<u8>
     }
 }
 
+fn symbol_name(symbol: &object::Symbol) -> String {
+    String::from(symbol.name().unwrap())
+}
+
 fn read_symbol(symbol: &object::Symbol, elf: &object::read::File) -> BFBBSymbol {
     let section = match symbol.section().index() {
         Some(x) => Some(x.0),
@@ -90,7 +96,7 @@ fn read_symbol(symbol: &object::Symbol, elf: &object::read::File) -> BFBBSymbol 
     let end = offset + size;
     BFBBSymbol {
         index: symbol.index(),
-        name: String::from(symbol.name().unwrap()),
+        name: symbol_name(symbol),
         size: symbol.size(),
         kind: symbol.kind(),
         scope: symbol.scope(),

@@ -26,7 +26,12 @@ pub struct BFBBSymbol {
 
 #[derive(Debug)]
 pub struct BFBBRelocation {
+    // address relative to the start of the section in the object file
     pub address: u64,
+
+    // address relative to the start of the function text
+    pub relative_address: u64,
+
     pub offset: u64,
     pub size: u8,
     pub kind: RelocationKind,
