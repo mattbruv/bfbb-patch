@@ -10,6 +10,7 @@ use std::{
     fs::{self, read},
     vec,
 };
+use util::write::write_obj;
 
 use crate::util::read::read_obj;
 
@@ -38,43 +39,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     let target_elf = object::File::parse(&*bin_target)?;
     let source_elf = object::File::parse(&*bin_source)?;
 
-    let out_elf = object::write::Object::new(
-        object::BinaryFormat::Elf,
-        object::Architecture::PowerPc,
-        object::Endianness::Big,
-    );
+    let source_obj = read_obj(&source_elf);
 
-    let target_obj = read_obj(&target_elf);
-
-    let mut syms = target_obj.symbols;
-    syms.sort_by_key(|x| x.index.0);
-
-    let mut count = 1;
-    for sym in &syms {
-        if sym.data.relocs.len() > 0 {
-            println!("{} starts at offset {}", sym.name, sym.section_offset);
-            for rel in &sym.data.relocs {
-                println!(
-                    "reloc {} = addr: {}, rel: {}, {}, {:?}, {:?}",
-                    count, rel.address, rel.relative_address, rel.symbol_name, rel.kind, rel.addend
-                );
-                count += 1;
-            }
-            println!("");
-        }
-    }
-
-    println!("{} symbols processed", syms.len());
-
-    println!("Sections:");
-    for section in target_obj.sections {
-        println!("{:?}", section);
-    }
-
-    //let s = target_elf.symbols().nth(0).unwrap();
-    //out_elf.add_symbol(s);
-
-    fs::write(args.out, out_elf.write().unwrap())?;
+    write_obj(&source_obj, args.out);
 
     Ok(())
 }
