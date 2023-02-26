@@ -41,11 +41,15 @@ fn main() -> Result<(), Box<dyn Error>> {
     );
 
     let mut syms = read_symbols(&target_elf);
-    syms.sort_by_key(|x| x.name.clone());
+    syms.sort_by_key(|x| x.index.0);
 
     println!("Parsed symbols: ");
     for sym in syms {
         println!("{:?}", sym);
+
+        if let SymbolKind::Data = sym.kind {
+            println!("{:?}", sym.kind);
+        }
     }
 
     //let s = target_elf.symbols().nth(0).unwrap();

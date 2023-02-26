@@ -1,26 +1,36 @@
-/*
-pub struct Symbol {
-    pub name: Vec<u8>,
-    pub value: u64,
-    pub size: u64,
-    pub kind: SymbolKind,
-    pub scope: Symbolcope,
-    pub weak: bool,
-    pub section: SymbolSection,
-    pub flags: SymbolFlags<SectionId>,
-}
- */
+use object::{
+    RelocationEncoding, RelocationKind, SectionIndex, SymbolFlags, SymbolIndex, SymbolKind,
+    SymbolScope,
+};
 
-use object::{write::SectionId, SectionIndex, SymbolFlags, SymbolKind, SymbolScope};
+#[derive(Debug)]
+pub struct BFBBData {
+    pub bytes: Vec<u8>,
+    pub relocs: Vec<BFBBRelocation>,
+}
 
 #[derive(Debug)]
 pub struct BFBBSymbol {
+    pub index: SymbolIndex,
     pub name: String,
-    pub value: u64,
     pub size: u64,
     pub kind: SymbolKind,
     pub scope: SymbolScope,
     pub weak: bool,
     pub section: Option<usize>,
+    pub section_name: String,
+    pub section_offset: u64,
     pub flags: SymbolFlags<SectionIndex>,
+    pub data: BFBBData,
+}
+
+#[derive(Debug)]
+pub struct BFBBRelocation {
+    pub address: u64,
+    pub offset: u64,
+    pub size: u8,
+    pub kind: RelocationKind,
+    pub encoding: RelocationEncoding,
+    pub symbol_name: String,
+    pub addend: i64,
 }
