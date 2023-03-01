@@ -15,16 +15,36 @@ fn read_symbols(elf: &object::read::File) -> Vec<BFBBSymbol> {
     symbols
 }
 
+fn is_relevant_section(section: &object::read::Section) -> bool {
+    let name = section.name().unwrap();
+    let ignore_sections = vec!["", ".symtab", ".strtab", ".shstrtab"];
+
+    if ignore_sections.contains(&name) {
+        return false;
+    }
+
+    if name.contains("debug") {
+        return false;
+    }
+
+    true
+}
+
 fn read_sections(elf: &object::read::File) -> Vec<BFBBSection> {
     elf.sections()
-        .map(|section| BFBBSection {
-            name: section.name().unwrap().to_string(),
-            kind: section.kind(),
-            address: section.address(),
-            size: section.size(),
-            align: section.align(),
-            index: section.index().0,
-            flags: section.flags(),
+        // Ignore sections without names
+        .filter(is_relevant_section)
+        .map(|section| {
+            println!("{:?}", section);
+            BFBBSection {
+                name: section.name().unwrap().to_string(),
+                kind: section.kind(),
+                address: section.address(),
+                size: section.size(),
+                align: section.align(),
+                index: section.index().0,
+                flags: section.flags(),
+            }
         })
         .collect()
 }

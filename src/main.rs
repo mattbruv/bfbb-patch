@@ -41,6 +41,15 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let source_obj = read_obj(&source_elf);
 
+    /*
+       for sec in source_elf.sections() {
+           println!("{:?}", sec);
+           for rel in sec.relocations() {
+               println!("{:?}", rel);
+           }
+       }
+    */
+
     write_obj(&source_obj, args.out);
 
     Ok(())
