@@ -42,8 +42,20 @@ pub fn write_obj(obj: &BFBBObj, path: String) {
             }
         }
     }
+    // Done writing sections
 
-    //out_elf.add_symbol();
+    // Write all symbols to symbol table
+    for symbol in &obj.symbols {
+        out_elf.add_symbol(object::write::Symbol {
+            name: symbol.name.into_bytes(),
+            size: symbol.size,
+            kind: symbol.kind,
+            scope: symbol.scope,
+            weak: symbol.weak, //flags: symbol.flags
+        });
+    }
+
+    // TODO: Add relocations
 
     fs::write(path, out_elf.write().unwrap()).unwrap();
 }
