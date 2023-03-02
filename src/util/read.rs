@@ -17,7 +17,7 @@ fn read_symbols(elf: &object::read::File) -> Vec<BFBBSymbol> {
 
 fn is_relevant_section(section: &object::read::Section) -> bool {
     let name = section.name().unwrap();
-    let ignore_sections = vec!["", ".symtab", ".strtab", ".shstrtab"];
+    let ignore_sections = vec![".symtab", ".strtab", ".shstrtab"];
 
     if ignore_sections.contains(&name) {
         return false;

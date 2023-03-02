@@ -1,6 +1,9 @@
-use std::fs;
+use std::{collections::HashMap, fs, hash::Hash};
 
-use object::{write::Symbol, SectionKind};
+use object::{
+    write::{SectionId, Symbol, SymbolSection},
+    SectionKind, SymbolKind,
+};
 
 use super::bfbbobj::{BFBBObj, BFBBSymbol};
 
@@ -11,10 +14,15 @@ pub fn write_obj(obj: &BFBBObj, path: String) {
         object::Endianness::Big,
     );
 
+    let mut section_map: HashMap<String, SectionId> = HashMap::new();
+
     // add each section to the new object file
     for section in &obj.sections {
         let id = out_elf.add_section(vec![], section.name.as_bytes().to_vec(), section.kind);
         let out_section = out_elf.section_mut(id);
+
+        section_map.insert(section.name.clone(), id);
+
         out_section.flags = section.flags;
 
         // add the data for this particular section
@@ -46,12 +54,32 @@ pub fn write_obj(obj: &BFBBObj, path: String) {
 
     // Write all symbols to symbol table
     for symbol in &obj.symbols {
+        let symbol_section = match symbol.kind {
+            SymbolKind::File => SymbolSection::None,
+            SymbolKind::Section => {
+                println!("FUCK {:?}", symbol);
+
+                match section_map.get(&symbol.name) {
+                    Some(sid) => SymbolSection::Section(*sid),
+                    None => SymbolSection::None,
+                }
+            }
+            _ => SymbolSection::Undefined,
+        };
+
+        println!("Adding symbol: {:?}", symbol);
+
         out_elf.add_symbol(object::write::Symbol {
-            name: symbol.name.into_bytes(),
+            name: symbol.name.clone().into_bytes(),
             size: symbol.size,
             kind: symbol.kind,
             scope: symbol.scope,
-            weak: symbol.weak, //flags: symbol.flags
+            weak: symbol.weak,
+
+            // not sure about these three
+            section: symbol_section,
+            value: 0,
+            flags: object::SymbolFlags::None,
         });
     }
 
