@@ -55,6 +55,10 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+pub fn foo() -> bool {
+    return false;
+}
+
 // fn parse_object(elf: &object::read::File) -> ParsedObject {}
 
 fn bytes_equal(vec1: &Vec<u8>, vec2: &Vec<u8>) -> bool {

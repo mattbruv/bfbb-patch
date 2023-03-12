@@ -9,8 +9,3 @@ edition = "2021"
 object = { version = "0.30.0", features = ["read_core", "std", "elf", "write_std"], default-features = false }
 argh = "0.1.9"
 
-[workspace]
-
-members = [
-    "prueba"
-]
