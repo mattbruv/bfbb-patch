@@ -32,45 +32,18 @@ struct PatchArgs {
 
 fn main() -> Result<(), Box<dyn Error>> {
     let args: PatchArgs = argh::from_env();
+    patch_object(args.target, args.source, args.out)
+}
 
-    let bin_target = fs::read(args.target)?;
-    let bin_source = fs::read(args.source)?;
+pub fn patch_object(target: String, source: String, out: String) -> Result<(), Box<dyn Error>> {
+    let bin_target = fs::read(target)?;
+    let bin_source = fs::read(source)?;
 
     let target_elf = object::File::parse(&*bin_target)?;
     let source_elf = object::File::parse(&*bin_source)?;
 
     let source_obj = read_obj(&source_elf);
-
-    /*
-       for sec in source_elf.sections() {
-           println!("{:?}", sec);
-           for rel in sec.relocations() {
-               println!("{:?}", rel);
-           }
-       }
-    */
-
-    write_obj(&source_obj, args.out);
+    write_obj(&source_obj, out);
 
     Ok(())
-}
-
-pub fn foo() -> bool {
-    return false;
-}
-
-// fn parse_object(elf: &object::read::File) -> ParsedObject {}
-
-fn bytes_equal(vec1: &Vec<u8>, vec2: &Vec<u8>) -> bool {
-    if vec1.len() != vec2.len() {
-        return false;
-    }
-
-    for i in 0..vec1.len() {
-        if vec1[i] != vec2[i] {
-            return false;
-        }
-    }
-
-    true
 }
